@@ -39,7 +39,7 @@ public final class Connection {
 	}
 	
 	public func unsafeExecute(_ query: String) -> Result? {
-		if query.description.isEmpty { return nil }
+		if query.isEmpty { return nil }
 		
 		guard let result = PQexec(self.connection, query) else {
 			return nil
