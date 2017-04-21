@@ -20,17 +20,9 @@ class ObjectIDTests: XCTestCase {
 		super.setUp()
 		
 		do {
-			let connection = try ObjectIDTests.database.connect()
-			_ = connection.execute("DROP TABLE test.test;")
-			_ = connection.execute("DROP TYPE complex;")
-			_ = connection.execute("DROP TYPE mood;")
-			_ = connection.execute("DROP FUNCTION testfunc ();")
-			_ = connection.execute("DROP FUNCTION add(integer, integer);")
-			_ = connection.execute("DROP OPERATOR test.===(integer, integer);")
-			_ = connection.execute("DROP FUNCTION add(integer, integer);")
-			_ = connection.execute("DROP ROLE testrole;")
-			_ = connection.execute("DROP SCHEMA test;")
+			try self.sanityTearDown()
 			
+			let connection = try ObjectIDTests.database.connect()
 			_ = connection.execute("CREATE SCHEMA test;")
 		} catch let error {
 			print("⚠️ Postgres Not Configured ⚠️")
@@ -46,12 +38,23 @@ class ObjectIDTests: XCTestCase {
 		}
 	}
 	
+	private func sanityTearDown() throws {
+		let connection = try ObjectIDTests.database.connect()
+		_ = connection.execute("DROP TABLE test.test;")
+		_ = connection.execute("DROP TYPE complex;")
+		_ = connection.execute("DROP TYPE mood;")
+		_ = connection.execute("DROP FUNCTION testfunc ();")
+		_ = connection.execute("DROP FUNCTION add(integer, integer);")
+		_ = connection.execute("DROP OPERATOR test.===(integer, integer);")
+		_ = connection.execute("DROP FUNCTION add(integer, integer);")
+		_ = connection.execute("DROP ROLE testrole;")
+		_ = connection.execute("DROP SCHEMA test;")
+	}
+	
 	override func tearDown() {
-		super.tearDown()
+		try? self.sanityTearDown()
 		
-		let connection = try? ObjectIDTests.database.connect()
-		_ = connection?.execute("DROP TABLE test.test;")
-		_ = connection?.execute("DROP SCHEMA test;")
+		super.tearDown()
 	}
 	
 	private func connect(_ type: String,
@@ -239,7 +242,7 @@ class ObjectIDTests: XCTestCase {
 		let connection = try ObjectIDTests.database.connect()
 		_ = connection.execute("CREATE TABLE test.test (a timetz);")
 		_ = connection.execute("begin;")
-		_ = connection.execute("set local timezone to 'EST5EDT';")
+		_ = connection.execute("set local timezone to '-7';")
 		_ = connection.execute("INSERT INTO test.test (a) values ('07:23:54');")
 		let results = connection.execute("SELECT * from test.test;")!
 		_ = connection.execute("end;")
@@ -250,7 +253,7 @@ class ObjectIDTests: XCTestCase {
 			XCTFail("Expecting '.String', found '\(result.value)'")
 			return
 		}
-		XCTAssertEqual(x, "07:23:54-05")
+		XCTAssertEqual(x, "07:23:54-07")
 	}
 	
 	func test_interval() throws {
